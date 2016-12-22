@@ -24,6 +24,9 @@ import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -40,6 +43,7 @@ public class PlayerFragment extends Fragment implements ServiceCallbacks,Service
     private TextView songInfo;
     boolean mBound = false;
     MusicService mMusicService;
+    private AdView mAdView;
 
     public static Fragment newInstance(){ return new PlayerFragment();}
 
@@ -87,6 +91,9 @@ public class PlayerFragment extends Fragment implements ServiceCallbacks,Service
             }
         });
 
+        mAdView = (AdView) view.findViewById(R.id.adView);
+        mAdView.loadAd(new AdRequest.Builder().addTestDevice("1AEAF8162FB044D02AF74472B2FB0446").build());
+
 
         return view;
     }
@@ -110,6 +117,18 @@ public class PlayerFragment extends Fragment implements ServiceCallbacks,Service
             mMusicService.removeNotification();
             mMusicService.mBuilder = null;
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(mAdView!=null) mAdView.pause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(mAdView!=null) mAdView.resume();
     }
 
     @Override
@@ -155,7 +174,7 @@ public class PlayerFragment extends Fragment implements ServiceCallbacks,Service
             }
             mHandler.removeCallbacks(null);
             mMusicService.removeNotification();
-        Log.i(TAG,"destroyed");
+        if(mAdView!=null) mAdView.destroy();
     }
 
     @Override
@@ -174,7 +193,7 @@ public class PlayerFragment extends Fragment implements ServiceCallbacks,Service
     }
 
     public void updateUI(){
-        if(mBound) {
+        if(mBound && mMusicService.mSong!=null) {
 
             songInfo.setText(mMusicService.mSong.getPosition() + ") " + mMusicService.mSong.getDisplayName());
             songInfo.setTextColor(Color.RED);
